@@ -8,7 +8,10 @@ website:
     left:
       - href: index.qmd
         text: Home
-      - about.qmd
+      - href: about.qmd
+        text: About 
+      - href: 30DayChartChallenge.qmd
+        text: 30DayChartChallenge
 
 format:
   html:
