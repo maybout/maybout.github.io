@@ -8,12 +8,15 @@ format:
      code-fold: true
      code-summary: "Show the code"
      self-contained: false
+     embed-resources: true
 
 execute:
-  cache: TRUE
+  cache: FALSE
 ---
 
 ![https://www.cedricscherer.com/2024/04/01/contributions-30daychartchallenge-2024/](Image1.png){.lightbox}
+
+Here is my project of the 30 Day Chart Challenge using R while trying to bring good data and understand better about visualization and the different graphs you can use... Come learn with me and watch my evolution creating graphs !
 
 # Setup of package installation :
 
@@ -305,6 +308,42 @@ p_interactive <- ggplotly(p, tooltip = "text")
 # Afficher le graphique interactif
 p_interactive
 
+```
+
+```{r OECD2, message =FALSE, warning=FALSE}
+library(readxl)
+library(ggplot2)
+library(tidyverse)
+library(plotly)
+
+OECD2 <- read_excel("../Rwork/30DayChartChallenge/OECD2.xlsx")
+
+# Renommer la colonne et filtrer les lignes non nulles
+migration_data <- rename(OECD2, Country = 1)
+migration_data <- filter(migration_data, !is.na(Country))
+
+# Convertir les données en format long
+migration_long <- pivot_longer(migration_data, -Country, names_to = "Year", values_to = "Value")
+
+# Convertir les colonnes Year et Value en numériques
+migration_long$Year <- as.numeric(migration_long$Year)
+migration_long$Value <- as.numeric(gsub(",", "", migration_long$Value))
+
+# Créer le graphique avec ggplot2
+p <- ggplot(migration_long, aes(x = Year, y = Value, color = Country, group = Country, text = paste("Country:", Country, "<br>Year:", Year, "<br>Value:", Value))) +
+  geom_line() +
+  theme_minimal() +
+  labs(title = "Chronological Chart of International migration",
+       x = "Year",
+       y = "Proportion of migrants on the total population") +
+  scale_x_continuous(breaks = seq(min(migration_long$Year), max(migration_long$Year), by = 1)) +  # Forcer l'affichage de toutes les années
+  theme(legend.position = "none")  # Suppression de la légende
+
+#Convertir le graphique ggplot2 en graphique plotly interactif
+p_interactive <- ggplotly(p, tooltip = "text")
+
+# Afficher le graphique interactif
+p_interactive
 ```
 
 # Day 7 : Hazards
@@ -827,3 +866,126 @@ plot_disaster1
 
 #plot_disasterr / plot_disaster+ theme(legend.position = "left") + plot_annotation(title = 'Number of recorded natural disaster events, 1900 to 2024 ')
 ```
+
+# Day 17 : Network
+
+Network graph using the distance between cities.
+
+```{r Network, message=FALSE, warning=FALSE}
+#Make the graph with k=3 nearest neighbors
+library(ggraph)
+library(igraph)
+library(tidyverse)
+library(tidygraph)
+
+# install.packages("FastKNN")
+mateuro<-as.matrix(eurodist)
+n=ncol(mateuro)
+library(FastKNN)
+k=3
+nn = matrix(0,n,k) # n x k
+for (i in 1:n)
+  nn[i,] = k.nearest.neighbors(i, mateuro, k = k)
+nngraph<-matrix(0,ncol=n,nrow=n)
+for (i in 1:n){
+  nngraph[i,nn[i,]]=1
+}
+ig<-graph_from_adjacency_matrix(nngraph,mode = "undirected")
+V(ig)$name<-rownames(mateuro)
+
+coords<-cmdscale(eurodist,k=2)
+layg<-graph_from_adjacency_matrix(mateuro,weighted=TRUE)
+
+
+graph1 <- as_tbl_graph(ig)
+
+ggraph(graph1,layout=coords) +
+  geom_edge_link(aes(colour = "red")) +
+  geom_node_point()+
+  geom_node_label(aes(label=rownames(mateuro)),repel=TRUE) +
+  labs(title = "Graph of the three nearest neighbours") +
+  theme_void() + 
+  theme(legend.position = "none") 
+```
+
+# Day 18 : Asian Develmt Bank
+
+```{r ADB, warning=FALSE, message=FALSE}
+# Load libraries
+library(ggplot2)
+
+# Prepare the data
+aus<-readRDS("../Rwork/30DayChartChallenge/Aussie2.rds")
+aust=t(aus)
+aust=as.data.frame(aust)
+
+#Create the plot 
+Cloth_Alcohol_correlation = ggplot(aust,aes(x=Alcohol_Tobacco_drugs,y=Clothing_footwear))+
+  geom_point(aes(col=Year), size = 2) +
+  scale_colour_gradient(low = "lightblue", high = "darkgreen") +
+  labs(title = "Price of clothing and alcohol in Australia", x = "Alcohol, Tabacco and drugs", y = "Clothing and footwear") +
+  geom_label(aes(x = 115, y = 102, label = "Negative correlation = -0.84"), color = "black", fill = "white", size = 3.5, hjust = 0) +
+  theme_bw()
+
+Cloth_Alcohol_correlation
+```
+
+From the ADB Bank : [https://data.adb.org/dataset/australia-key-indicators](https://data.adb.org/dataset/australia-key-indicators)
+
+# Day 19 : Dinosaurs
+
+Reference to Anscombe's quartet that shows the importance of looking at the scatter plot graph, and not only the statistics like correlation or mean !
+
+```{r, datasaurus}
+# Load the libraries
+library(datasauRus)
+library(ggplot2)
+library(dplyr)
+
+# Define color palette
+colors <- c("dino" = "#FF9999", "bullseye" = "#FFCC99", "star" = "#FFFF99", "slant_up" = "#99FF99")
+
+# Filter the datasets from the datasaurus_dozen
+datasets <- datasaurus_dozen %>%
+  filter(dataset %in% c("dino", "bullseye", "star", "slant_up"))
+
+# Create the plots
+ggplot(datasets, aes(x = x, y = y, color = dataset)) +
+  geom_point() +
+  scale_color_manual(values = colors) +
+  facet_wrap(~ dataset) +
+  theme_minimal() +
+  labs(title = "Datasaurus Dozen",
+       x = "X",
+       y = "Y") +
+  theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
+
+```
+
+# Day 20 : Correlation
+
+Zooming in the correlation of Data from ABD Day 18 in Australia:
+
+```{r correlation}
+library(pheatmap)
+library(ggplot2)
+
+#Create data frame out of the ADB data of Australia already used before
+australia = aust[,c(1,4,20,32,33,29,30,36,37,38,41,45)]
+
+# You can already see the correlation matrix with round(cor(australia),2)
+
+# 3 different heatmaps
+Aus1 = pheatmap(cor(australia))
+
+aus2<-australia[,-c(5,10)]
+Aus2 = pheatmap(cor(aus2))
+
+aus3<-australia[,-c(5,6,10,12,11,9)]
+Aus3 = pheatmap(cor(aus3))
+
+# Observation : We see that the biggest correlation is between the money invested in Health and the total population which is normal because the more there is humans the more we need money in Health
+```
+
+
+
