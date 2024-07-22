@@ -846,7 +846,7 @@ plot_disaster <- ggplot(data = disaster, aes(x = Year, y = Disasters, group = En
        x = "Year",
        y = "",
        color = "Disasters") + 
-  theme_minimal() + theme(legend.position = "left")
+  theme_minimal() + theme(legend.position = "none")
 plot_disaster1 = ggplotly(plot_disaster)
 
 #stacked bar plot
