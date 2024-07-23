@@ -987,5 +987,51 @@ Aus3 = pheatmap(cor(aus3))
 # Observation : We see that the biggest correlation is between the money invested in Health and the total population which is normal because the more there is humans the more we need money in Health
 ```
 
+# Day 21 : 
 
+# Day 22 : Mobility
 
+```{r mobility,eval=FALSE}
+# Load necessary libraries
+library(ggplot2)
+library(gganimate)
+library(dplyr)
+library(tidyr)  # Ensure tidyr is loaded for pivot_longer
+
+# Create data
+data <- data.frame(
+  Transport = c("Train", "Car", "Tube", "Bus"),
+  X1960 = c(22, 7, 27, 38),
+  X1980 = c(27, 22, 22, 27),
+  X2000 = c(17, 37, 25, 19)
+)
+
+# Reshape data for gganimate
+data_melted <- data %>%
+  pivot_longer(cols = starts_with("X"), names_to = "Year", values_to = "Percentage") %>%
+  mutate(Year = recode(Year, X1960 = "1960", X1980 = "1980", X2000 = "2000"))
+
+# Create animated plot
+animated_plot <- ggplot(data_melted, aes(x = Transport, y = Percentage, fill = Transport)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Mode of Transport in {closest_state}", 
+       x = "Mode of Transport", 
+       y = "Percentage of Commuters") +
+  scale_y_continuous(breaks = seq(0, 40, 5), limits = c(0, 40)) +
+  scale_fill_manual(values = c("Train" = "skyblue", "Car" = "peachpuff", "Tube" = "lightgreen", "Bus" = "lightcoral")) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(size = 20, face = "bold")  # Increase title size
+  ) +
+  transition_states(Year, transition_length = 2, state_length = 1) +
+  enter_fade() +
+  exit_shrink() +
+  ease_aes('sine-in-out')
+
+# Save the animation
+# animate(animated_plot, width = 400, height = 300)
+# anim_save("animated_plot.gif", animated_plot)
+```
+
+![](animated_plot.gif)
